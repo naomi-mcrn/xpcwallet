@@ -154,7 +154,7 @@ class TestMessage < MiniTest::Test
   end
 end
 
-class TestBCWallet < MiniTest::Test
+class TestXPCWallet < MiniTest::Test
   HANDSHAKES = [
     # version
     0x0b, 0x11, 0x09, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -203,19 +203,19 @@ class TestBCWallet < MiniTest::Test
       data_file_name = "#{dir}/data"
 
       assert_output nil, /Usage\: ruby xpcwallet\.rb/ do
-        BCWallet.new([''], key_file_name, data_file_name).run
+        XPCWallet.new([''], key_file_name, data_file_name).run
       end
 
       assert_output nil, /xpcwallet\.rb: invalid command/ do
-        BCWallet.new(['foo'], key_file_name, data_file_name).run
+        XPCWallet.new(['foo'], key_file_name, data_file_name).run
       end
 
       assert_output nil, /xpcwallet.rb: missing arguments/ do
-        BCWallet.new(['export'], key_file_name, data_file_name).run
+        XPCWallet.new(['export'], key_file_name, data_file_name).run
       end
 
       assert_output nil, /xpcwallet\.rb: an address named foo doesn't exist/ do
-        BCWallet.new(
+        XPCWallet.new(
           ['send', 'foo', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '1.00'],
           key_file_name, data_file_name).run
       end
@@ -228,19 +228,19 @@ class TestBCWallet < MiniTest::Test
       data_file_name = "#{dir}/data"
 
       assert_output /No addresses available/, nil do
-        BCWallet.new(['list'], key_file_name, data_file_name).run
+        XPCWallet.new(['list'], key_file_name, data_file_name).run
       end
 
       assert_output /new Bitcoin address "naomi-mcrn" generated/ do
-        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       assert_output nil, /the name "naomi-mcrn" already exists/ do
-        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       assert_output /naomi-mcrn/ do
-        BCWallet.new(['list'], key_file_name, data_file_name).run
+        XPCWallet.new(['list'], key_file_name, data_file_name).run
       end
     end
   end
@@ -251,13 +251,13 @@ class TestBCWallet < MiniTest::Test
       data_file_name = "#{dir}/data"
 
       assert_output /new Bitcoin address "naomi-mcrn" generated/ do
-        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       $stdin = StringIO.new('yes', 'r')
 
       assert_output nil, /Are you sure you want to export private key for "naomi-mcrn"/ do
-        BCWallet.new(['export', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['export', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
     end
   end
@@ -268,7 +268,7 @@ class TestBCWallet < MiniTest::Test
       data_file_name = "#{dir}/data"
 
       assert_output /new Bitcoin address "naomi-mcrn" generated/ do
-        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       stream = StringIO.new((HANDSHAKES + BLOCKS).pack('C*'))
@@ -279,14 +279,14 @@ class TestBCWallet < MiniTest::Test
       TCPSocket.stub :open, stream do
         timeout 10 do
           assert_output /naomi-mcrn: 0\.00000000 BTC/, nil do
-            BCWallet.new(['balance'], key_file_name, data_file_name).run
+            XPCWallet.new(['balance'], key_file_name, data_file_name).run
           end
         end
 
       end
 
       assert_output /merkleblock/, nil do
-        BCWallet.new(
+        XPCWallet.new(
           ['block', '000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943'],
           key_file_name, data_file_name).run
       end
@@ -301,7 +301,7 @@ class TestBCWallet < MiniTest::Test
       data_file_name = "#{dir}/data"
 
       assert_output /new Bitcoin address "naomi-mcrn" generated/ do
-        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
+        XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       $stream = StringIO.new((HANDSHAKES + BLOCKS).pack('C*'))
@@ -318,7 +318,7 @@ class TestBCWallet < MiniTest::Test
       TCPSocket.stub :open, $stream do
         timeout 10 do
           assert_output nil, /you don't have enough balance to pay/ do
-            BCWallet.new(
+            XPCWallet.new(
               ['send', 'naomi-mcrn', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '1.00'],
               key_file_name, data_file_name).run
           end
@@ -333,7 +333,7 @@ class TestBCWallet < MiniTest::Test
       TCPSocket.stub :open, $stream do
         timeout 10 do
           assert_output nil, nil do
-            BCWallet.new(
+            XPCWallet.new(
               ['send', 'naomi-mcrn', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '0.00'],
               key_file_name, data_file_name).run
           end
