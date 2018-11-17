@@ -94,8 +94,8 @@ class TestMessage < MiniTest::Test
     assert_equal 31900, msg[:version]
     assert_equal 1, msg[:services]
     assert_equal 1292899814, msg[:timestamp]
-    assert_equal nil, msg[:your_addr]
-    assert_equal nil, msg[:my_addr]
+    assert_nil nil, msg[:your_addr]
+    assert_nil nil, msg[:my_addr]
     assert_equal 1393780771635895773, msg[:nonce]
     assert_equal '', msg[:agent]
     assert_equal 98645, msg[:height]
@@ -231,7 +231,7 @@ class TestXPCWallet < MiniTest::Test
         XPCWallet.new(['list'], key_file_name, data_file_name).run
       end
 
-      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+      assert_output /new XPChain address "naomi-mcrn" generated/ do
         XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
@@ -250,7 +250,7 @@ class TestXPCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+      assert_output /new XPChain address "naomi-mcrn" generated/ do
         XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
@@ -267,7 +267,7 @@ class TestXPCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+      assert_output /new XPChain address "naomi-mcrn" generated/ do
         XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
@@ -300,7 +300,7 @@ class TestXPCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+      assert_output /new XPChain address "naomi-mcrn" generated/ do
         XPCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
