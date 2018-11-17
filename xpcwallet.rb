@@ -940,12 +940,14 @@ class Network
         puts @status
 
         send_transaction_inv
+        $snd = true
       else 
         puts "NO tx...#{@created_transaction}"
       end
 
       loop do
-        break if dispatch_message
+        ret = dispatch_message
+        break if ret && !$snd
       end
 
       @is_sync_finished = true
@@ -1237,6 +1239,7 @@ class Network
   end
 
   def dispatch_getdata(message)
+    $snd = nil
     @status = 'sending transaction data ... '
 
     # Send the transaction you create
