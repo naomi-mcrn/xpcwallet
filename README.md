@@ -1,30 +1,26 @@
-# bcwallet.rb: A stand-alone Bitcoin client within approx. 800 LOC!
+# xpcwallet.rb: A stand-alone XPChain client
 
-bcwallet.rb is an educational Bitcoin client written in Ruby language.
-
-The client is written for [Bitcoin no shikumi](http://bitcoin.peryaudo.org/) ("The Mechanism of Bitcoin"), a Japanese website describes Bitcoin from the technical perspective.
-
-[![Build Status](https://travis-ci.org/peryaudo/bcwallet.svg?branch=master)](https://travis-ci.org/peryaudo/bcwallet) [![Code Climate](https://codeclimate.com/github/peryaudo/bcwallet.png)](https://codeclimate.com/github/peryaudo/bcwallet) [![Coverage Status](https://coveralls.io/repos/peryaudo/bcwallet/badge.png?branch=master)](https://coveralls.io/r/peryaudo/bcwallet?branch=master)
+説明はフォーク元を参照のこと。
 
 ## Features
 
-* Stand-alone Bitcoin client within approx. 800 lines of code (counted by CLOC)
+* Stand-alone XPChain client 
   * Generate address, export key, show balances for addresses, send coins from addresses ...
 * Written in pure Ruby
   * No additional dependencies
 * Implements Simplified Payment Verification (SPV)
-* Comments to help you understand how Bitcoin client is implemented
+* Comments to help you understand how XPChain client is implemented
 * Testnet supported (use in main network is not recommended)
 
 ## Usage
 
-    Usage: ruby bcwallet.rb <command> [<args>]
+    Usage: ruby xpcwallet.rb <command> [<args>]
     commands:
-        generate <name>             generate a new Bitcoin address
-        list                        show list for all Bitcoin addresses
-        export <name>               show private key for the Bitcoin address
-        balance                     show balances for all Bitcoin addresses
-        send <name> <to> <amount>   transfer coins to the Bitcoin address
+        generate <name>             generate a new XPChain address
+        list                        show list for all XPChain addresses
+        export <name>               show private key for the XPChain address
+        balance                     show balances for all XPChain addresses
+        send <name> <to> <amount>   transfer coins to the XPChain address
 
 ## Dependencies
 
@@ -32,17 +28,15 @@ The client is written for [Bitcoin no shikumi](http://bitcoin.peryaudo.org/) ("T
 
 ## Disclaimer
 
-DO NOT USE THIS CLIENT IN MAIN NETWORK, OR YOU MAY LOSE YOUR COINS!
-
-Because this client is for technical education, it skips a lot of validations and may have critical bugs.
-
-Use [Testnet](https://en.bitcoin.it/wiki/Testnet) instead. Testnet coins are worthless coins. You can receive Testnet coins for free at [TP's TestNet Faucet](http://tpfaucet.appspot.com/) to try this client.
+XPChain用に何か作るための自己学習用なので、このソースを使っておかしなことになっても知らぬ。
+あと、メインネットで使うとかバカなことはやめるんだ。
 
 ## License
 
 The MIT License (MIT)
 
-Copyright (c) 2014 peryaudo
+Copyright (c) 2014 peryaudo (original)
+          (c) 2018 naomi-mcrn (modified)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -62,7 +56,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-## ToDo
-
-* Write Merkle tree validation for transactions
-* Rewrite with Fiber
