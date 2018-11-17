@@ -19,6 +19,11 @@ IS_TESTNET = true
 # Remote host to use: It is recommended to use this client with a local client.
 # Install XPChain-Qt and then launch with -testnet option to connect Testnet.
 HOST = 'localhost'
+PORT = {testnet: 18798, main: 8798}
+MSG_MAGIC = {testnet: 'fc87bbc1', main: 'fc87bac0'}
+CURRENCY_UNIT = "XPC"
+MIN_INIT_DIGIT = 4 
+MIN_UNIT_INV = 10**MIN_INIT_DIGIT
 
 # This software is licensed under the MIT license.
 #
@@ -122,7 +127,7 @@ class Key
   def self.encode_base58check(type, plain)
     leading_bytes = {
       main:    { public_key: 0,   private_key: 128 },
-      testnet: { public_key: 111, private_key: 239 }
+      testnet: { public_key: 138,   private_key: 239 }
     }
 
     leading_byte = [leading_bytes[IS_TESTNET ? :testnet : :main][type]].pack('C')
@@ -140,12 +145,50 @@ class Key
 
     types = {
       main:    { 0   => :public_key, 128 => :private_key },
-      testnet: { 111 => :public_key, 239 => :private_key }
+      testnet: { 138 => :public_key, 239 => :private_key }
     }
 
     type = types[IS_TESTNET ? :testnet : :main][decoded[0].unpack('C').first]
 
     { type: type, data: decoded[1, decoded.length - 5] }
+  end
+
+  ###########################  ported code from bitcoin-ruby ######################3
+  # Compares two arrays of bytes
+  def self.compare_big_endian(c1, c2)
+    c1, c2 = c1.dup, c2.dup # Clone the arrays
+
+    while c1.size > c2.size
+      return 1 if c1.shift > 0
+    end
+
+    while c2.size > c1.size
+      return -1 if c2.shift > 0
+    end
+
+    c1.size.times{|idx| return c1[idx] - c2[idx] if c1[idx] != c2[idx] }
+    0
+  end
+
+  # Loosely correlates with IsLowDERSignature() from interpreter.cpp
+  def self.is_low_der_signature?(sig)
+    s = sig.unpack("C*")
+
+    length_r = s[3]
+    length_s = s[5+length_r]
+    s_val = s.slice(6 + length_r, length_s)
+
+    # If the S value is above the order of the curve divided by two, its
+    # complement modulo the order could have been used instead, which is
+    # one byte shorter when encoded correctly.
+    max_mod_half_order = [
+      0x7f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+      0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+      0x5d,0x57,0x6e,0x73,0x57,0xa4,0x50,0x1d,
+      0xdf,0xe9,0x2f,0x46,0x68,0x1b,0x20,0xa0]
+
+    compare_big_endian(s_val, [0]) > 0 &&
+      compare_big_endian(s_val, max_mod_half_order) <= 0
   end
 
   #
@@ -401,7 +444,7 @@ class Message
   def read(socket)
     packet = read_packet(socket)
 
-    expected_magic    = [IS_TESTNET ? '0b110907' : 'f9beb4d9'].pack('H*')
+    expected_magic    = [IS_TESTNET ? MSG_MAGIC[:testnet] : MSG_MAGIC[:main]].pack('H*')
     expected_checksum = Key.hash256(packet[:payload])[0, 4]
 
     if packet[:magic] != expected_magic
@@ -427,7 +470,7 @@ class Message
     payload = serialize(message)
 
     # 4bytes: magic
-    raw_message = [IS_TESTNET ? '0b110907' : 'f9beb4d9'].pack('H*')
+    raw_message = [IS_TESTNET ? MSG_MAGIC[:testnet] : MSG_MAGIC[:main]].pack('H*')
 
     # 12bytes: command (padded with zeroes)
     raw_message += [message[:command].to_s].pack('a12')
@@ -688,8 +731,8 @@ class Blockchain
     # These hashes are genesis blocks' ones.
     last_hash = { timestamp: 0,
                    hash: [IS_TESTNET ?
-                     '000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943' :
-                     '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f'].pack('H*').reverse }
+                     '00000000f04d3bdebf907f79b4b096a05d763ac890612202ff9c9cc685221617' :
+                     '000042cb97e9d18e436b012314f685a2ec68efc4d252d2b4e6362f6ea062cc41'].pack('H*').reverse }
 
     @data[:blocks].each do |hash, block|
       if block[:timestamp] > last_hash[:timestamp]
@@ -768,10 +811,10 @@ class Blockchain
 
     # In a real SPV client, we should walk along merkle trees to validate the transaction.
     # It will be implemented to this client soon.
-    total_satoshis = 0
+    total_mochas = 0
     tx_in = []
     @data[:txs].each do |tx_hash, tx|
-      break if total_satoshis >= amount
+      break if total_mochas >= amount
 
       matched = nil
       pk_script = nil
@@ -780,7 +823,8 @@ class Blockchain
         next if tx_out[:spent]
 
         if extract_public_key_hash_from_script(tx_out[:pk_script]) == public_key_hash
-          total_satoshis += tx_out[:value]
+          puts "MATCH! #{tx[:hash].unpack("C*").reverse.pack("C*").unpack("H*")[0]}:#{tx_out.inspect}" 
+          total_mochas += tx_out[:value]
           matched = index
           pk_script = tx_out[:pk_script]
           break
@@ -797,7 +841,7 @@ class Blockchain
       end
     end
 
-    { total_satoshis: total_satoshis, tx_in: tx_in }
+    { total_mochas: total_mochas, tx_in: tx_in }
   end
 
   #
@@ -841,7 +885,8 @@ class Blockchain
     unless script[0, 3]  == ['76a914'].pack('H*') &&
            script[23, 2] == ['88ac'].pack('H*') &&
            script.length == 25
-      raise 'unsupported script format' 
+      # raise 'unsupported script format'
+      return nil 
     end
 
     script[3, 20]
@@ -885,15 +930,18 @@ class Network
       unless @socket
         @status = 'connection establishing ... '
 
-        @socket = TCPSocket.open(HOST, IS_TESTNET ? 18333 : 8333)
+        @socket = TCPSocket.open(HOST, IS_TESTNET ? PORT[:testnet] : PORT[:main])
 
         send_version
       end
 
       if @created_transaction
         @status = 'announcing transaction ... '
+        puts @status
 
         send_transaction_inv
+      else 
+        puts "NO tx...#{@created_transaction}"
       end
 
       loop do
@@ -915,7 +963,8 @@ class Network
   # to_addr  = Receiving address (string)
   # transaction_fee = Transaction fee which miners receive
   #
-  def send(from_key, to_addr, amount, transaction_fee = 0)
+  def send(from_key, to_addr, amount, transaction_fee = 1 * MIN_UNIT_INV)
+    puts "DEBUG: send to #{to_addr} amount #{amount} fee #{transaction_fee}"
     # The process of announcing a created transaction is as follows: 
     #   Generate tx message and get its hash, and send inv message with the hash to the remote host.
     #   Then the remote host will send getdata, so you can now actually send tx message.
@@ -927,7 +976,7 @@ class Network
 
     accumulated = @blockchain.accumulate_txs(from_key, amount)
 
-    payback = accumulated[:total_satoshis] - amount - transaction_fee
+    payback = accumulated[:total_mochas] - amount - transaction_fee
     unless payback >= 0
       raise "you don't have enough balance to pay"
     end
@@ -935,7 +984,7 @@ class Network
     @created_transaction = sign_transaction(from_key, {
       command: :tx,
 
-      version: 1,
+      version: 2,
 
       tx_in: accumulated[:tx_in],
       tx_out: [{ value: amount,  pk_script: generate_pk_script(to_addr_decoded[:data]) },
@@ -943,6 +992,7 @@ class Network
 
       lock_time: 0
     })
+    puts "DEBUG: currently Network.send ctx=#{@created_transaction}"
 
     @status = ''
   end
@@ -1073,6 +1123,7 @@ class Network
     payload = @message.serialize(@created_transaction)
 
     @created_transaction[:hash] = Key.hash256(payload)
+    puts "DEBUG: tx hash = #{@created_transaction[:hash].unpack("C*").reverse.pack("C*").unpack("H*")[0]}"
     
     @message.write(@socket, {
       command: :inv,
@@ -1084,6 +1135,10 @@ class Network
   # Send transaction message you created
   #
   def send_transaction
+    puts "Sending Transaction. #{@created_transaction[:hash].unpack("C*").reverse.pack("C*").unpack("H*")[0]}"
+    puts @created_transaction.inspect
+    puts "RAW\n" + @message.serialize(@created_transaction).unpack('H*')[0]
+
     @message.write(@socket, @created_transaction)
 
     @socket.flush
@@ -1196,7 +1251,7 @@ class Network
     signatures = []
 
     transaction[:tx_in].length.times do |i|
-      signatures.push(sign_transaction_of_idx(i))
+      signatures.push(sign_transaction_of_idx(from_key, transaction, i))
     end
 
     signatures.each_with_index do |signature, i|
@@ -1228,7 +1283,12 @@ class Network
     # hash256 includes type code field (see the figure in the URL above)
     verified_str = Key.hash256(payload + [1].pack('V'))
 
-    from_key.sign(verified_str)
+    sig = from_key.sign(verified_str)
+    if Key.is_low_der_signature?(sig)
+      sig
+    else
+      raise "OOPS high S value!"
+    end
   end
 
   def generate_pk_script(public_key_hash)
@@ -1289,7 +1349,7 @@ class XPCWallet
     when 'list'     then list
     when 'export'   then export(@argv[1]) # name
     when 'balance'  then balance
-    when 'send'     then send(@argv[1], @argv[2], btc_to_satoshi(@argv[3].to_r)) # name, to, amount
+    when 'send'     then send(@argv[1], @argv[2], xpc_to_mocha(@argv[3].to_r)) # name, to, amount
     when 'block'    then block(@argv[1]) # hash
     end
   end
@@ -1335,6 +1395,7 @@ class XPCWallet
   end
 
   def wait_for_sync(mode = nil)
+    puts "TX SEND sync" if mode == :tx
     @network.sync
 
     rotate = ['/', '-', '\\', '|']
@@ -1356,12 +1417,12 @@ class XPCWallet
     end
   end
 
-  def btc_to_satoshi(btc)
-    btc * Rational(10 ** 8)
+  def xpc_to_mocha(xpc)
+    xpc * Rational(MIN_UNIT_INV)
   end
 
-  def satoshi_to_btc(satoshi)
-    Rational(satoshi, 10**8)
+  def mocha_to_xpc(mocha)
+    Rational(mocha, MIN_UNIT_INV)
   end
 
   def generate(name)
@@ -1407,14 +1468,14 @@ class XPCWallet
     puts 'Balances for available XPChain addresses: '
 
     balance = @network.get_balance
-    balance.each do |addr, satoshi|
-      puts "    #{ addr }: #{ sprintf('%.8f', satoshi_to_btc(satoshi)) } BTC"
+    balance.each do |addr, mocha|
+      puts "    #{ addr }: #{ sprintf("%.#{MIN_INIT_DIGIT}f", mocha_to_xpc(mocha)) } #{CURRENCY_UNIT}"
     end
   end
 
   def confirm_send(name, to, amount)
     $stderr.print "Are you sure you want to send\n"
-    $stderr.print "    #{sprintf('%.8f', satoshi_to_btc(amount))} BTC\n"
+    $stderr.print "    #{sprintf("%.#{MIN_INIT_DIGIT}f", mocha_to_xpc(amount))} #{CURRENCY_UNIT}\n"
     $stderr.print "from\n    \"#{name}\"\nto\n    \"#{to}\"\n? (yes/no): "
 
     $stdin.gets.chomp.downcase == 'yes'
@@ -1433,7 +1494,7 @@ class XPCWallet
         warn "xpcwallet.rb: #{e}"
         return
       end
-      wait_for_sync
+      wait_for_sync(:tx)
     end
   end
 
