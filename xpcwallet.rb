@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
 #
-# bcwallet.rb: Educational Bitcoin Client 
+# xpcwallet.rb: Educational XPChain Client 
 #
-# This is a tiny Bitcoin client implementation which uses
+# This is a tiny XPChain client implementation which uses
 # Simplified Payment Verification (SPV).
 #
 
@@ -17,7 +17,7 @@
 IS_TESTNET = true
 
 # Remote host to use: It is recommended to use this client with a local client.
-# Install Bitcoin-Qt and then launch with -testnet option to connect Testnet.
+# Install XPChain-Qt and then launch with -testnet option to connect Testnet.
 HOST = 'localhost'
 
 # This software is licensed under the MIT license.
@@ -53,7 +53,7 @@ require 'socket'
 #
 class Key
   #
-  # Bitcoin mainly uses SHA-256(SHA-256(plain)) as a cryptographic hash function
+  # XPChain mainly uses SHA-256(SHA-256(plain)) as a cryptographic hash function
   # when a hash is needed.
   #
   def self.hash256(plain)
@@ -70,7 +70,7 @@ class Key
   BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
   #
-  # Modified version of Base58 is used in Bitcoin to convert binaries into human-typable strings.
+  # Modified version of Base58 is used in XPChain to convert binaries into human-typable strings.
   #
   def self.encode_base58(plain)
     # plain is big endian
@@ -116,8 +116,8 @@ class Key
   end
 
   #
-  # Base58 with the type of data and the checksum is called Base58Check in Bitcoin protocol.
-  # It is used as a Bitcoin address, human-readable private key, etc.
+  # Base58 with the type of data and the checksum is called Base58Check in XPChain protocol.
+  # It is used as a XPChain address, human-readable private key, etc.
   #
   def self.encode_base58check(type, plain)
     leading_bytes = {
@@ -170,14 +170,14 @@ class Key
   end
 
   #
-  # Convert public key to Bitcoin address.
+  # Convert public key to XPChain address.
   #
   def to_address_s
     Key.encode_base58check(:public_key, Key.hash160(@key.public_key.to_bn.to_s(2)))
   end
 
   # 
-  # Convert the private key to Bitcoin private key import format.
+  # Convert the private key to XPChain private key import format.
   #
   def to_private_key_s
     Key.encode_base58check(:private_key, @key.private_key.to_s(2))
@@ -201,7 +201,7 @@ end
 
 #
 # A class which generates Bloom filter.
-# Bloom filter is a data structure used in Bitcoin to filter transactions for SPV clients.
+# Bloom filter is a data structure used in XPChain to filter transactions for SPV clients.
 # It enables you to quickly test whether an element is included in a set,
 # but may have false positives (i.e. probabilistic data structure).
 #
@@ -651,7 +651,7 @@ class Message
 end
 
 #
-# The blockchain class. It manages and stores Bitcoin blockchain data.
+# The blockchain class. It manages and stores XPChain blockchain data.
 #
 class Blockchain
   def initialize(keys, data_file_name)
@@ -754,7 +754,7 @@ class Blockchain
   # do a lot of validations, and actually take the longest block chain.
   #
   # The reason why the client took this way is simplicity and performance.
-  # Doing them in Ruby is painful, and also it's not ciritical to explain how Bitcoin client works.
+  # Doing them in Ruby is painful, and also it's not ciritical to explain how XPChain client works.
   #
   def is_young_block(hash)
     (@data[:blocks][hash][:timestamp] - Time.now.to_i).abs <= 60 * 60 && !is_too_high(hash)
@@ -833,7 +833,7 @@ class Blockchain
   end
 
   #
-  # Bitcoin has complex scripting system for its payment,
+  # XPChain has complex scripting system for its payment,
   # but we will only support very basic one.
   #
   def extract_public_key_hash_from_script(script)
@@ -982,7 +982,7 @@ class Network
       
       nonce:     (rand(1 << 64) - 1), # A random number.
 
-      agent:     '/bcwallet.rb:1.00/',
+      agent:     '/Sigeru:0.9.0/', # protocol 70002 = bitcoin core 0.9.0
       height:    (@blockchain.blocks.length - 1), # Height of possessed blocks
 
       # It forces the remote host not to send any 'inv' messages till it receive 'filterload' message.
@@ -1258,7 +1258,7 @@ end
 #
 # The class deals with command line arguments and the key file.
 #
-class BCWallet
+class XPCWallet
   def initialize(argv, keys_file_name, data_file_name)
     @argv = argv
     @keys_file_name = keys_file_name
@@ -1297,15 +1297,15 @@ class BCWallet
   private
 
   def usage(error = nil)
-    warn "bcwallet.rb: #{error}\n\n" if error
-    warn "bcwallet.rb: Educational Bitcoin Client"
-    warn "Usage: ruby bcwallet.rb <command> [<args>]"
+    warn "xpcwallet.rb: #{error}\n\n" if error
+    warn "xpcwallet.rb: Educational XPChain Client"
+    warn "Usage: ruby xpcwallet.rb <command> [<args>]"
     warn "commands:"
-    warn "    generate <name>\t\tgenerate a new Bitcoin address"
-    warn "    list\t\t\tshow list for all Bitcoin addresses"
-    warn "    export <name>\t\tshow private key for the Bitcoin address"
-    warn "    balance\t\t\tshow balances for all Bitcoin addresses"
-    warn "    send <name> <to> <amount>\ttransfer coins to the Bitcoin address"
+    warn "    generate <name>\t\tgenerate a new XPChain address"
+    warn "    list\t\t\tshow list for all XPChain addresses"
+    warn "    export <name>\t\tshow private key for the XPChain address"
+    warn "    balance\t\t\tshow balances for all XPChain addresses"
+    warn "    send <name> <to> <amount>\ttransfer coins to the XPChain address"
   end
 
   def require_args(number)
@@ -1373,7 +1373,7 @@ class BCWallet
       file.write "#{name} #{key.to_der_hex_s}\n"
     end
 
-    puts "new Bitcoin address \"#{name}\" generated: #{key.to_address_s}"
+    puts "new XPChain address \"#{name}\" generated: #{key.to_address_s}"
   end
 
   def list
@@ -1382,7 +1382,7 @@ class BCWallet
       return
     end
 
-    puts 'List of available Bitcoin addresses: '
+    puts 'List of available XPChain addresses: '
     @keys.each do |name, key|
       puts "    #{name}: #{key.to_address_s}"
     end
@@ -1404,7 +1404,7 @@ class BCWallet
     init_network
     wait_for_sync
 
-    puts 'Balances for available Bitcoin addresses: '
+    puts 'Balances for available XPChain addresses: '
 
     balance = @network.get_balance
     balance.each do |addr, satoshi|
@@ -1430,7 +1430,7 @@ class BCWallet
       begin
         @network.send(@keys[name], to, amount)
       rescue => e
-        warn "bcwallet.rb: #{e}"
+        warn "xpcwallet.rb: #{e}"
         return
       end
       wait_for_sync
@@ -1445,14 +1445,14 @@ end
 
 if caller.length == 0
   unless IS_TESTNET
-    warn 'WARNING: RUNNING UNDER MAIN NETWORK MODE'
+    raise 'WARNING: RUNNING UNDER MAIN NETWORK MODE' # force TESTNET ONLY!
   end
 
   key_file_name = IS_TESTNET ? 'keys_testnet' : 'keys'
   data_file_name = IS_TESTNET ? 'data_testnet' : 'data'
 
-  bcwallet = BCWallet.new(ARGV, key_file_name, data_file_name)
+  xpcwallet = XPCWallet.new(ARGV, key_file_name, data_file_name)
 
-  bcwallet.run
+  xpcwallet.run
 end
 
