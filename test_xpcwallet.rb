@@ -8,7 +8,7 @@ end
 require 'tmpdir'
 require 'timeout'
 require 'minitest/autorun'
-require './bcwallet'
+require './xpcwallet'
 
 class TestKey < MiniTest::Test
   def test_base58_encode
@@ -202,19 +202,19 @@ class TestBCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output nil, /Usage\: ruby bcwallet\.rb/ do
+      assert_output nil, /Usage\: ruby xpcwallet\.rb/ do
         BCWallet.new([''], key_file_name, data_file_name).run
       end
 
-      assert_output nil, /bcwallet\.rb: invalid command/ do
+      assert_output nil, /xpcwallet\.rb: invalid command/ do
         BCWallet.new(['foo'], key_file_name, data_file_name).run
       end
 
-      assert_output nil, /bcwallet.rb: missing arguments/ do
+      assert_output nil, /xpcwallet.rb: missing arguments/ do
         BCWallet.new(['export'], key_file_name, data_file_name).run
       end
 
-      assert_output nil, /bcwallet\.rb: an address named foo doesn't exist/ do
+      assert_output nil, /xpcwallet\.rb: an address named foo doesn't exist/ do
         BCWallet.new(
           ['send', 'foo', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '1.00'],
           key_file_name, data_file_name).run
@@ -231,15 +231,15 @@ class TestBCWallet < MiniTest::Test
         BCWallet.new(['list'], key_file_name, data_file_name).run
       end
 
-      assert_output /new Bitcoin address "peryaudo" generated/ do
-        BCWallet.new(['generate', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
-      assert_output nil, /the name "peryaudo" already exists/ do
-        BCWallet.new(['generate', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output nil, /the name "naomi-mcrn" already exists/ do
+        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
-      assert_output /peryaudo/ do
+      assert_output /naomi-mcrn/ do
         BCWallet.new(['list'], key_file_name, data_file_name).run
       end
     end
@@ -250,14 +250,14 @@ class TestBCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "peryaudo" generated/ do
-        BCWallet.new(['generate', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       $stdin = StringIO.new('yes', 'r')
 
-      assert_output nil, /Are you sure you want to export private key for "peryaudo"/ do
-        BCWallet.new(['export', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output nil, /Are you sure you want to export private key for "naomi-mcrn"/ do
+        BCWallet.new(['export', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
     end
   end
@@ -267,8 +267,8 @@ class TestBCWallet < MiniTest::Test
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "peryaudo" generated/ do
-        BCWallet.new(['generate', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       stream = StringIO.new((HANDSHAKES + BLOCKS).pack('C*'))
@@ -278,7 +278,7 @@ class TestBCWallet < MiniTest::Test
 
       TCPSocket.stub :open, stream do
         timeout 10 do
-          assert_output /peryaudo: 0\.00000000 BTC/, nil do
+          assert_output /naomi-mcrn: 0\.00000000 BTC/, nil do
             BCWallet.new(['balance'], key_file_name, data_file_name).run
           end
         end
@@ -294,14 +294,14 @@ class TestBCWallet < MiniTest::Test
   end
 
   def test_send
-    # TODO(peryaudo): do real checks to ensure sending functionality is working
+    # TODO(naomi-mcrn): do real checks to ensure sending functionality is working
 
     Dir.mktmpdir do |dir|
       key_file_name = "#{dir}/keys"
       data_file_name = "#{dir}/data"
 
-      assert_output /new Bitcoin address "peryaudo" generated/ do
-        BCWallet.new(['generate', 'peryaudo'], key_file_name, data_file_name).run
+      assert_output /new Bitcoin address "naomi-mcrn" generated/ do
+        BCWallet.new(['generate', 'naomi-mcrn'], key_file_name, data_file_name).run
       end
 
       $stream = StringIO.new((HANDSHAKES + BLOCKS).pack('C*'))
@@ -319,7 +319,7 @@ class TestBCWallet < MiniTest::Test
         timeout 10 do
           assert_output nil, /you don't have enough balance to pay/ do
             BCWallet.new(
-              ['send', 'peryaudo', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '1.00'],
+              ['send', 'naomi-mcrn', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '1.00'],
               key_file_name, data_file_name).run
           end
         end
@@ -334,7 +334,7 @@ class TestBCWallet < MiniTest::Test
         timeout 10 do
           assert_output nil, nil do
             BCWallet.new(
-              ['send', 'peryaudo', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '0.00'],
+              ['send', 'naomi-mcrn', 'n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi', '0.00'],
               key_file_name, data_file_name).run
           end
         end
